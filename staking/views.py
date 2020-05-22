@@ -1,3 +1,4 @@
+import time
 from functools import reduce
 
 import requests
@@ -20,7 +21,6 @@ def populate_stake_holders(request):
     timestamp = datetime.timestamp(now)
     stake_holders = map(lambda data: _data_to_stake_holder(data, timestamp), data_set)
     for holder in stake_holders:
-        print(holder)
         holder.save()
     return HttpResponse("success")
 
@@ -39,23 +39,31 @@ def get_stake_holders(request):
 
 def __map_stake_holder_to_view_model(stakeholder):
     holder_view_model = StakingViewModel(stakeholder)
-    transactions = Transaction.objects.filter(holder_address=stakeholder.address)
+    locking_timestamp = datetime.timestamp(datetime.now()) - 61440 * 45
+    transactions = Transaction.objects.filter(holder_address=stakeholder.address,
+                                              amount__gt=0,
+                                              timestamp__gte=locking_timestamp)
     holder_view_model.add_transactions(
         map(lambda tx: TransactionViewModel(tx), transactions)
     )
     return holder_view_model
 
 
-def populate_transaction(request, address):
-    url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-    transactions = _get_transactions_from(address, url)
-    for transaction in transactions:
-        transaction.save()
+def populate_transactions(request):
+    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
+    for holder in stake_holders:
+        address = holder.address
+        print('populate transactions for address: %s' % address)
+        url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
+        transactions = _get_transactions_from(address, url)
+        for transaction in transactions:
+            transaction.save()
     return HttpResponse()
 
 
 def _get_transactions_from(address, url):
     print('fetching data from url: %s' % url)
+    time.sleep(1)
     json = requests.get(url).json()
     transaction_list = requests.get(url).json()['results']['data']['transaction_list']
     transactions = list(map(lambda data: _data_to_transaction(address, data), transaction_list))
