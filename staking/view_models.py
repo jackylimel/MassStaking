@@ -7,8 +7,9 @@ class StakingViewModel:
 
     def __init__(self, holder):
         self.address = holder.address
-        self.total_amount = holder.total_amount
+        self.total= holder.total_amount
         self.time = DateHelper.from_time_stamp(holder.timestamp)
+        self.rank = holder.order
         self.transactions = []
 
     def add_transactions(self, transactions):
@@ -17,13 +18,15 @@ class StakingViewModel:
 
 class TransactionViewModel:
     def __init__(self, transaction):
-        self.total_amount = transaction.amount
+        self.total = transaction.amount
         self.timestamp = transaction.timestamp
-        self.locking_time = DateHelper.from_time_stamp(transaction.timestamp)
-        if self.total_amount > 0:
+        if self.total > 0:
+            self.locking_time = DateHelper.from_time_stamp(transaction.timestamp)
             self.unlocking_time = DateHelper.from_time_stamp(float(transaction.timestamp) + 61440 * 45)
         else:
-            self.unlocking_time = None
+            self.locking_time = None
+            self.unlocking_time = DateHelper.from_time_stamp(transaction.timestamp)
+
 
 
 class DateHelper:

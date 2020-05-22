@@ -2,6 +2,7 @@ from functools import reduce
 
 import requests
 from django.http import HttpResponse
+from django.template import loader
 
 from .models import *
 from .view_models import *
@@ -28,13 +29,12 @@ def get_stake_holders(request):
     stake_holders = StakeHolder.objects.filter(receiving_reward=True)
     holder_view_models = map(lambda holder: __map_stake_holder_to_view_model(holder), stake_holders)
     total = reduce(lambda accu, result: accu + float(result.total_amount), stake_holders, 0)
-    for vm in holder_view_models:
-        for tx in vm.transactions:
-            print(tx.total_amount)
-            print(tx.locking_time)
-            print(tx.unlocking_time)
-        print(vm.total_amount)
-    return HttpResponse('total: %f' % total)
+    template = loader.get_template('staking/index.html')
+    context = {
+        'stake_holders': holder_view_models,
+        'total_amount': total
+    }
+    return HttpResponse(template.render(context, request))
 
 
 def __map_stake_holder_to_view_model(stakeholder):
