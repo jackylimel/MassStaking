@@ -26,27 +26,37 @@ def populate_stake_holders(request):
 
 
 def get_stake_holders(request):
-    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
-    holder_view_models = map(lambda holder: __map_stake_holder_to_view_model(holder), stake_holders)
+    stake_holders = _load_stake_holders()
+    transaction_view_models = list(map(lambda tx: TransactionViewModel(tx), _load_transactions()))
+
+    holder_view_models = map(lambda holder: _map_stake_holder_to_view_model(holder, transaction_view_models),
+                             stake_holders)
+    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
     total = reduce(lambda accu, result: accu + float(result.total_amount), stake_holders, 0)
+
     template = loader.get_template('staking/index.html')
     context = {
         'stake_holders': holder_view_models,
+        'sorted_transactions': sorted_transaction_view_models,
         'total_amount': total
     }
     return HttpResponse(template.render(context, request))
 
 
-def __map_stake_holder_to_view_model(stakeholder):
+def _map_stake_holder_to_view_model(stakeholder, transaction_view_models):
     holder_view_model = StakingViewModel(stakeholder)
-    locking_timestamp = datetime.timestamp(datetime.now()) - 61440 * 45
-    transactions = Transaction.objects.filter(holder_address=stakeholder.address,
-                                              amount__gt=0,
-                                              timestamp__gte=locking_timestamp)
-    holder_view_model.add_transactions(
-        map(lambda tx: TransactionViewModel(tx), transactions)
-    )
+    filtered_transactions = list(filter(lambda tx: tx.holder_address == stakeholder.address, transaction_view_models))
+    holder_view_model.add_transactions(filtered_transactions)
     return holder_view_model
+
+
+def _load_stake_holders():
+    return StakeHolder.objects.filter(receiving_reward=True)
+
+
+def _load_transactions():
+    locking_timestamp = datetime.timestamp(datetime.now()) - 61440 * 45
+    return Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
 
 
 def populate_transactions(request):

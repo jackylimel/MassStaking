@@ -2,6 +2,26 @@ The total staking amount is: {{ total_amount }}
 <br>
 <br>
 <br>
+{% if sorted_transactions %}
+<table>
+    <thead>
+    <tr>
+        <th style="width: 80px;" align="middle">Total</th>
+        <th style="width: 280px;" align="middle">Locking Time</th>
+        <th style="width: 280px;" align="middle">Unlocking Time</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for transaction in sorted_transactions %}
+    <tr>
+        <td align="middle">{{ transaction.total }}</td>
+        <td height="30" align="middle">{{ transaction.locking_time }}</td>
+        <td height="30" align="middle">{{ transaction.unlocking_time }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 {% if stake_holders %}
 <table>
     <thead>
@@ -19,7 +39,7 @@ The total staking amount is: {{ total_amount }}
         <td>{{ holder.address }}</td>
         <td>{{ holder.total }}</td>
         <td>
-            {% if stake_holders %}
+            {% if holder.transactions %}
             <table>
                 <thead>
                 <tr>
@@ -31,9 +51,9 @@ The total staking amount is: {{ total_amount }}
                 <tbody>
                 {% for transaction in holder.transactions %}
                 <tr>
-                    <td>{{ transaction.total}}</td>
-                    <td height="30">{% if stake_holders %} {{ transaction.locking_time}} {% endif %}</td>
-                    <td height="30">{{ transaction.unlocking_time}}</td>
+                    <td>{{ transaction.total }}</td>
+                    <td height="30">{{ transaction.locking_time }}</td>
+                    <td height="30">{{ transaction.unlocking_time }}</td>
                 </tr>
                 {% endfor %}
                 </tbody>

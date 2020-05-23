@@ -20,6 +20,7 @@ class TransactionViewModel:
     def __init__(self, transaction):
         self.total = transaction.amount
         self.timestamp = transaction.timestamp
+        self.holder_address = transaction.holder_address
         self.locking_time = DateHelper.from_time_stamp(transaction.timestamp)
         if self.total > 0:
             self.unlocking_time = DateHelper.from_time_stamp(float(transaction.timestamp) + 61440 * 45)
