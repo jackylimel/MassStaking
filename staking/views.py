@@ -1,10 +1,9 @@
-import time
 from functools import reduce
 
 import pandas
 import requests
 from django.http import HttpResponse
-from django.template import loader
+from django.shortcuts import render
 
 from .models import *
 from .view_models import *
@@ -42,8 +41,6 @@ def get_stake_holders(request):
         lambda tx: {'date': tx.to_pydatetime().date,
                     'value': dic[tx]}, dic))
 
-    template = loader.get_template('staking/index.html')
-
     total = reduce(lambda accu, result: accu + float(result.total_amount), stake_holders, 0)
 
     context = {
@@ -52,7 +49,7 @@ def get_stake_holders(request):
         'total_amount': total,
         'sum': tx_sum_list
     }
-    return HttpResponse(template.render(context, request))
+    return render(request, 'staking/index.html', context)
 
 
 def _map_stake_holder_to_view_model(stakeholder, transaction_view_models):
@@ -85,7 +82,6 @@ def populate_transactions(request):
 
 def _get_transactions_from(address, url):
     print('fetching data from url: %s' % url)
-    time.sleep(1)
     json = requests.get(url).json()
     transaction_list = requests.get(url).json()['results']['data']['transaction_list']
     transactions = list(map(lambda data: _data_to_transaction(address, data), transaction_list))
