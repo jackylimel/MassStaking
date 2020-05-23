@@ -16,21 +16,25 @@ def index(request):
 
 
 def populate_stake_holders(request):
-    r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/transactions/staking/reward/top/?limit=30')
-    data_set = r.json()['data']
-    timestamp = datetime.timestamp(datetime.now())
-    new_stake_holders = [_data_to_stake_holder(data, timestamp) for data in data_set]
+    new_stake_holders = _fetch_stake_holders()
     new_stake_holder_addresses = [holder.address for holder in new_stake_holders]
-    existing_stake_holders = list(_load_stake_holders())
+    existing_stake_holders = _load_stake_holders()
     if len(new_stake_holder_addresses) != 0:
         filtered = [holder for holder in existing_stake_holders if holder.address not in new_stake_holder_addresses]
         for filtered_holder in filtered:
             filtered_holder.receiving_reward = False
             filtered_holder.save()
     for new_holder in new_stake_holders:
-        print(new_holder)
         new_holder.save()
     return HttpResponse("success")
+
+
+def _fetch_stake_holders():
+    r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/transactions/staking/reward/top/?limit=30')
+    data_set = r.json()['data']
+    timestamp = datetime.timestamp(datetime.now())
+    new_stake_holders = [_data_to_stake_holder(data, timestamp) for data in data_set]
+    return new_stake_holders
 
 
 def _data_to_stake_holder(data, timestamp):
@@ -71,14 +75,14 @@ def _map_stake_holder_to_view_model(stakeholder, transaction_view_models):
 
 
 def _load_stake_holders():
-    return filter(lambda holder: holder.address not in Constants.official_addresses,
-                  StakeHolder.objects.filter(receiving_reward=True))
+    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
+    return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
 def _load_transactions():
     locking_timestamp = datetime.timestamp(datetime.now()) - 61440 * 45
     all_transactions = Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
-    return filter(lambda tx: tx.holder_address not in Constants.official_addresses, all_transactions)
+    return [tx for tx in all_transactions if tx.holder_address not in Constants.official_addresses]
 
 
 def populate_transactions(request):
@@ -108,8 +112,3 @@ def _data_to_transaction(address, data):
     transaction = Transaction(hash=data['txhash'], amount=data['collect'],
                               timestamp=data['tx']['block']['timestamp'], holder_address=address)
     return transaction
-
-
-def _data_to_stake_holder(data, timestamp):
-    return StakeHolder(address=data['address'], total_amount=data['total_amount'],
-                       order=data['id'], timestamp=timestamp, receiving_reward=True)
