@@ -7,6 +7,7 @@ from django.shortcuts import render
 
 from .models import *
 from .view_models import *
+from .constants import Constants
 
 
 # Create your views here.
@@ -29,8 +30,8 @@ def get_stake_holders(request):
     stake_holders = _load_stake_holders()
     transaction_view_models = list(map(lambda tx: TransactionViewModel(tx), _load_transactions()))
 
-    holder_view_models = map(lambda holder: _map_stake_holder_to_view_model(holder, transaction_view_models),
-                             stake_holders)
+    holder_view_models = list(map(lambda holder: _map_stake_holder_to_view_model(holder, transaction_view_models),
+                             stake_holders))
 
     sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
 
@@ -60,12 +61,14 @@ def _map_stake_holder_to_view_model(stakeholder, transaction_view_models):
 
 
 def _load_stake_holders():
-    return StakeHolder.objects.filter(receiving_reward=True)
+    return filter(lambda holder: holder.address not in Constants.official_addresses,
+                       StakeHolder.objects.filter(receiving_reward=True))
 
 
 def _load_transactions():
     locking_timestamp = datetime.timestamp(datetime.now()) - 61440 * 45
-    return Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
+    all_transactions = Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
+    return filter(lambda tx: tx.holder_address not in Constants.official_addresses, all_transactions)
 
 
 def populate_transactions(request):
