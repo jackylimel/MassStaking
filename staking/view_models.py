@@ -24,8 +24,12 @@ class TransactionViewModel:
         self.locking_time = DateHelper.from_time_stamp(transaction.timestamp)
         if self.total > 0:
             self.unlocking_time = DateHelper.from_time_stamp(float(transaction.timestamp) + 61440 * 45)
+            self.unlocking_day = datetime(year=self.unlocking_time.year,
+                                          month=self.unlocking_time.month,
+                                          day=self.unlocking_time.day)
         else:
             self.unlocking_time = None
+            self.unlocking_day = None
 
 
 class DateHelper:

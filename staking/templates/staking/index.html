@@ -1,6 +1,22 @@
 The total staking amount is: {{ total_amount }}
 <br>
 <br>
+<table>
+    <thead>
+    <tr>
+        <th style="width: 280px;" align="middle">Unlocking Time</th>
+        <th style="width: 80px;" align="middle">Total</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for tx in sum %}
+        <tr>
+            <td align="middle">{{ tx.date }}</td>
+            <td align="middle">{{ tx.value }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
 <br>
 {% if sorted_transactions %}
 <table>

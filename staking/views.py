@@ -1,6 +1,7 @@
 import time
 from functools import reduce
 
+import pandas
 import requests
 from django.http import HttpResponse
 from django.template import loader
@@ -31,14 +32,25 @@ def get_stake_holders(request):
 
     holder_view_models = map(lambda holder: _map_stake_holder_to_view_model(holder, transaction_view_models),
                              stake_holders)
+
     sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
-    total = reduce(lambda accu, result: accu + float(result.total_amount), stake_holders, 0)
+
+    data_frame = pandas.DataFrame.from_records([vars(vm) for vm in sorted_transaction_view_models])
+    tx_sum = data_frame.groupby('unlocking_day')['total'].sum()
+    dic = tx_sum.to_dict()
+    tx_sum_list = list(map(
+        lambda tx: {'date': tx.to_pydatetime().date,
+                    'value': dic[tx]}, dic))
 
     template = loader.get_template('staking/index.html')
+
+    total = reduce(lambda accu, result: accu + float(result.total_amount), stake_holders, 0)
+
     context = {
         'stake_holders': holder_view_models,
         'sorted_transactions': sorted_transaction_view_models,
-        'total_amount': total
+        'total_amount': total,
+        'sum': tx_sum_list
     }
     return HttpResponse(template.render(context, request))
 
@@ -60,7 +72,7 @@ def _load_transactions():
 
 
 def populate_transactions(request):
-    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
+    stake_holders = _load_stake_holders()
     for holder in stake_holders:
         address = holder.address
         print('populate transactions for address: %s' % address)
