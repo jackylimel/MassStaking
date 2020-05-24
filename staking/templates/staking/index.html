@@ -37,7 +37,7 @@ The total staking amount is: {{ total_amount }}
     <tbody>
     {% for tx in sum %}
     <tr>
-        <td align="middle">{{ tx.date }}</td>
+        <td align="middle">{{ tx.date.date }}</td>
         <td align="middle">{{ tx.value }}</td>
     </tr>
     {% endfor %}
