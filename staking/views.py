@@ -5,6 +5,7 @@ import requests
 from django.http import HttpResponse
 from django.shortcuts import render
 
+import csv
 from .models import *
 from .view_models import *
 from .constants import Constants
@@ -43,7 +44,7 @@ def _data_to_stake_holder(data, timestamp):
 
 
 def get_stake_holders(request):
-    stake_holder_view_models = _get_stake_holder_view_model_dic()
+    stake_holder_view_models = sorted(_get_stake_holder_view_model_dic(), key=lambda vm: vm.current_rank())
     total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
 
     transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
@@ -58,6 +59,32 @@ def get_stake_holders(request):
         'sum': tx_sum_list
     }
     return render(request, 'staking/index.html', context)
+
+
+def get_stake_holders_with_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    # response['Content-Disposition'] = 'attachment; filename="holder_summary.csv"'
+    response['Content-Disposition'] = 'attachment; filename="transaction_summary.csv"'
+
+    stake_holder_view_models = _get_stake_holder_view_model_dic()
+
+    transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
+    tx_sum_list = _generate_grouped_transactions(transaction_view_models)
+
+    for holder in stake_holder_view_models:
+        holder.add_transactions([tx for tx in transaction_view_models if tx.holder_address == holder.address])
+
+    writer = csv.writer(response)
+
+    writer.writerow(['Unlocking Time', 'Total'])
+    for tx in tx_sum_list:
+        writer.writerow([tx['date'], tx['value']])
+
+    # writer.writerow(['Address', 'Rank', 'Change since yesterday', 'Total amount', 'Change since yesterday'])
+    # for holder in stake_holder_view_models:
+    #     writer.writerow([holder.address, holder.current_rank(), holder.rank_change(),
+    #                      holder.current_total_amount(), holder.amount_change()])
+    return response
 
 
 def _generate_grouped_transactions(transaction_view_models):
@@ -85,7 +112,7 @@ def populate_transactions(request):
         if round(vm.amount_change(), 0) != 0:
             print('populate transactions for address: %s' % address)
             url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-            transactions = _get_transactions_from(address, url, single_page_only=True)
+            transactions = _get_transactions_from(address, url, single_page_only=(len(vm.holders) > 1))
             for transaction in transactions:
                 transaction.save()
     return HttpResponse()
