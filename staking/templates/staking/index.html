@@ -1,7 +1,6 @@
 The total staking amount is: {{ total_amount }}
 <br>
 <br>
-{% if stake_holders %}
 <table>
     <thead>
     <tr>
@@ -25,7 +24,6 @@ The total staking amount is: {{ total_amount }}
     </tbody>
 </table>
 
-{% endif %}
 <br>
 <br>
 <br>
@@ -47,47 +45,25 @@ The total staking amount is: {{ total_amount }}
 </table>
 <br>
 
-{% if stake_holders %}
+{% if transactions %}
 <table>
     <thead>
     <tr>
-        <th style="width: 60px;">Rank</th>
-        <th style="width: 180px;">Address</th>
-        <th>Total Amount (MASS)</th>
-        <th>Transactions</th>
+        <th style="width: 80px;">Address</th>
+        <th style="width: 80px;">Total</th>
+        <th style="width: 280px;" align="middle">Locking Time</th>
+        <th style="width: 280px;">Unlocking Time</th>
     </tr>
     </thead>
     <tbody>
-    {% for holder in stake_holders %}
+    {% for transaction in transactions %}
     <tr>
-        <td>{{ holder.current_rank }}</td>
-        <td>{{ holder.address }}</td>
-        <td>{{ holder.current_total_amount }}</td>
-        <td>
-            {% if holder.transactions %}
-            <table>
-                <thead>
-                <tr>
-                    <th style="width: 80px;">Total</th>
-                    <th style="width: 280px;" align="middle">Locking Time</th>
-                    <th style="width: 280px;">Unlocking Time</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for transaction in holder.transactions %}
-                <tr>
-                    <td>{{ transaction.total }}</td>
-                    <td height="30">{{ transaction.locking_time }}</td>
-                    <td height="30">{{ transaction.unlocking_time }}</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            {% endif %}
-        </td>
+        <td>{{ transaction.holder_address }}</td>
+        <td>{{ transaction.total }}</td>
+        <td height="30">{{ transaction.locking_time }}</td>
+        <td height="30">{{ transaction.unlocking_time }}</td>
     </tr>
     {% endfor %}
     </tbody>
 </table>
-
 {% endif %}

@@ -7,7 +7,6 @@ class StakingViewModel:
 
     def __init__(self, holder):
         self.address = holder.address
-        # self.time = DateHelper.from_time_stamp(holder.timestamp)
         self.transactions = []
         self.holders = []
         self.holders.append(holder)
@@ -42,9 +41,6 @@ class StakingViewModel:
 
     def _top_holder(self):
         return self.holders[0]
-
-    def add_transactions(self, transactions):
-        self.transactions.extend(sorted(transactions, key=lambda tx: tx.timestamp))
 
 
 class TransactionViewModel:

@@ -48,14 +48,13 @@ def get_stake_holders(request):
     total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
     transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
     tx_sum_list = _generate_grouped_transactions(transaction_view_models)
-
-    for holder in stake_holder_view_models:
-        holder.add_transactions([tx for tx in transaction_view_models if tx.holder_address == holder.address])
+    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
 
     context = {
         'stake_holders': stake_holder_view_models,
-        'total_amount': total,
-        'sum': tx_sum_list
+        'transactions': sorted_transaction_view_models,
+        'sum': tx_sum_list,
+        'total': total
     }
     return render(request, 'staking/index.html', context)
 
