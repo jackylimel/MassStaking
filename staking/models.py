@@ -10,7 +10,8 @@ class StakeHolder(models.Model):
     receiving_reward = models.BooleanField()
 
     def __str__(self):
-        return ','.join(map(lambda key: '{key} = {value}'.format(key=key, value=self.__dict__.get(key)), self.__dict__))
+        return 'Address: {0}, Rank: {1}, Amount: {2}, Timestamp: {3}'.format(self.address, self.order,
+                                                                             self.total_amount, self.timestamp)
 
 
 class Transaction(models.Model):

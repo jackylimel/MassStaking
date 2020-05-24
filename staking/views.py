@@ -86,24 +86,37 @@ def _load_transactions():
 
 
 def populate_transactions(request):
-    stake_holders = _load_stake_holders()
-    for holder in stake_holders:
-        address = holder.address
-        print('populate transactions for address: %s' % address)
-        url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-        transactions = _get_transactions_from(address, url)
-        for transaction in transactions:
-            transaction.save()
+    stake_holder_view_model_dic = _get_stake_holder_view_model_dic()
+    for vm in stake_holder_view_model_dic.values():
+        address = vm.address
+        if round(vm.amount_change(), 0) != 0:
+            print('populate transactions for address: %s' % address)
+            url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
+            transactions = _get_transactions_from(address, url, single_page_only=True)
+            for transaction in transactions:
+                transaction.save()
     return HttpResponse()
 
 
-def _get_transactions_from(address, url):
+def _get_stake_holder_view_model_dic():
+    stake_holders = _load_stake_holders()
+    holders_dic = {}
+    for holder in stake_holders:
+        vm = holders_dic.get(holder.address)
+        if vm is None:
+            holders_dic[holder.address] = StakingViewModel(holder)
+        else:
+            holders_dic.get(holder.address).add_holder(holder)
+    return holders_dic
+
+
+def _get_transactions_from(address, url, single_page_only=False):
     print('fetching data from url: %s' % url)
     json = requests.get(url).json()
     transaction_list = requests.get(url).json()['results']['data']['transaction_list']
     transactions = list(map(lambda data: _data_to_transaction(address, data), transaction_list))
 
-    if json['next'] is not None:
+    if (not single_page_only) and (json['next'] is not None):
         transactions.extend(_get_transactions_from(address, json['next']))
     return transactions
 

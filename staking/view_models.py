@@ -7,10 +7,41 @@ class StakingViewModel:
 
     def __init__(self, holder):
         self.address = holder.address
-        self.total = holder.total_amount
-        self.time = DateHelper.from_time_stamp(holder.timestamp)
-        self.rank = holder.order
+        # self.time = DateHelper.from_time_stamp(holder.timestamp)
         self.transactions = []
+        self.holders = []
+        self.holders.append(holder)
+
+    def add_holder(self, holder):
+        self.holders.append(holder)
+        self.holders.sort(key=lambda h: h.timestamp, reverse=True)
+
+    def is_new_holder(self):
+        return len(self.holders) == 1
+
+    def current_rank(self):
+        return self._top_holder().order
+
+    def current_total_amount(self):
+        return self._top_holder().total_amount
+
+    def current_timestamp(self):
+        return self._top_holder().timestamp
+
+    def rank_change(self):
+        if len(self.holders) >= 2:
+            return self.holders[1].order - self._top_holder().order
+        else:
+            return self._top_holder().order
+
+    def amount_change(self):
+        if len(self.holders) >= 2:
+            return self._top_holder().total_amount - self.holders[1].total_amount
+        else:
+            return self._top_holder().total_amount
+
+    def _top_holder(self):
+        return self.holders[0]
 
     def add_transactions(self, transactions):
         self.transactions.extend(sorted(transactions, key=lambda tx: tx.timestamp))
