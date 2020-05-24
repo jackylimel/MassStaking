@@ -51,9 +51,9 @@ The total staking amount is: {{ total_amount }}
     <tbody>
     {% for holder in stake_holders %}
     <tr>
-        <td>{{ holder.rank }}</td>
+        <td>{{ holder.current_rank }}</td>
         <td>{{ holder.address }}</td>
-        <td>{{ holder.total }}</td>
+        <td>{{ holder.current_total_amount }}</td>
         <td>
             {% if holder.transactions %}
             <table>

@@ -43,11 +43,11 @@ def _data_to_stake_holder(data, timestamp):
 
 
 def get_stake_holders(request):
-    stake_holders = _load_stake_holders()
-    transaction_view_models = list(map(lambda tx: TransactionViewModel(tx), _load_transactions()))
+    stake_holder_view_models = _get_stake_holder_view_model_dic()
+    transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
 
-    holder_view_models = list(map(lambda holder: _map_stake_holder_to_view_model(holder, transaction_view_models),
-                                  stake_holders))
+    for holder in stake_holder_view_models:
+        holder.add_transactions([tx for tx in transaction_view_models if tx.holder_address == holder.address])
 
     sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
 
@@ -56,27 +56,15 @@ def get_stake_holders(request):
     dic = tx_sum.to_dict()
     tx_sum_list = list(map(lambda tx: {'date': tx.to_pydatetime().date, 'value': dic[tx]}, dic))
 
-    total = reduce(lambda accu, result: accu + float(result.total_amount), stake_holders, 0)
+    total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
 
     context = {
-        'stake_holders': holder_view_models,
+        'stake_holders': stake_holder_view_models,
         'sorted_transactions': sorted_transaction_view_models,
         'total_amount': total,
         'sum': tx_sum_list
     }
     return render(request, 'staking/index.html', context)
-
-
-def _map_stake_holder_to_view_model(stakeholder, transaction_view_models):
-    holder_view_model = StakingViewModel(stakeholder)
-    filtered_transactions = list(filter(lambda tx: tx.holder_address == stakeholder.address, transaction_view_models))
-    holder_view_model.add_transactions(filtered_transactions)
-    return holder_view_model
-
-
-def _load_stake_holders():
-    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
-    return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
 def _load_transactions():
@@ -87,7 +75,7 @@ def _load_transactions():
 
 def populate_transactions(request):
     stake_holder_view_model_dic = _get_stake_holder_view_model_dic()
-    for vm in stake_holder_view_model_dic.values():
+    for vm in stake_holder_view_model_dic:
         address = vm.address
         if round(vm.amount_change(), 0) != 0:
             print('populate transactions for address: %s' % address)
@@ -107,14 +95,19 @@ def _get_stake_holder_view_model_dic():
             holders_dic[holder.address] = StakingViewModel(holder)
         else:
             holders_dic.get(holder.address).add_holder(holder)
-    return holders_dic
+    return holders_dic.values()
+
+
+def _load_stake_holders():
+    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
+    return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
 def _get_transactions_from(address, url, single_page_only=False):
     print('fetching data from url: %s' % url)
     json = requests.get(url).json()
     transaction_list = requests.get(url).json()['results']['data']['transaction_list']
-    transactions = list(map(lambda data: _data_to_transaction(address, data), transaction_list))
+    transactions = [_data_to_transaction(address, data) for data in transaction_list]
 
     if (not single_page_only) and (json['next'] is not None):
         transactions.extend(_get_transactions_from(address, json['next']))
