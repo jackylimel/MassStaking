@@ -44,27 +44,29 @@ def _data_to_stake_holder(data, timestamp):
 
 def get_stake_holders(request):
     stake_holder_view_models = _get_stake_holder_view_model_dic()
+    total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
+
     transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
+    tx_sum_list = _generate_grouped_transactions(transaction_view_models)
 
     for holder in stake_holder_view_models:
         holder.add_transactions([tx for tx in transaction_view_models if tx.holder_address == holder.address])
 
-    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
-
-    data_frame = pandas.DataFrame.from_records([vars(vm) for vm in sorted_transaction_view_models])
-    tx_sum = data_frame.groupby('unlocking_day')['total'].sum()
-    dic = tx_sum.to_dict()
-    tx_sum_list = list(map(lambda tx: {'date': tx.to_pydatetime().date, 'value': dic[tx]}, dic))
-
-    total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
-
     context = {
         'stake_holders': stake_holder_view_models,
-        'sorted_transactions': sorted_transaction_view_models,
         'total_amount': total,
         'sum': tx_sum_list
     }
     return render(request, 'staking/index.html', context)
+
+
+def _generate_grouped_transactions(transaction_view_models):
+    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
+    data_frame = pandas.DataFrame.from_records([vars(vm) for vm in sorted_transaction_view_models])
+    tx_sum = data_frame.groupby('unlocking_day')['total'].sum()
+    dic = tx_sum.to_dict()
+    tx_sum_list = [{'date': tx.to_pydatetime().date, 'value': dic[tx]} for tx in dic]
+    return tx_sum_list
 
 
 def _load_transactions():
