@@ -1,6 +1,34 @@
 The total staking amount is: {{ total_amount }}
 <br>
 <br>
+{% if stake_holders %}
+<table>
+    <thead>
+    <tr>
+        <th style="width: 180px;">Address</th>
+        <th style="width: 100px;">Current Rank</th>
+        <th style="width: 200px;">Change from yesterday</th>
+        <th>Total Amount (MASS)</th>
+        <th>Amount change</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for holder in stake_holders %}
+    <tr>
+        <td>{{ holder.address }}</td>
+        <td>{{ holder.current_rank }}</td>
+        <td>{{ holder.rank_change }}</td>
+        <td>{{ holder.current_total_amount }}</td>
+        <td>{{ holder.amount_change}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endif %}
+<br>
+<br>
+<br>
 <table>
     <thead>
     <tr>
@@ -10,10 +38,10 @@ The total staking amount is: {{ total_amount }}
     </thead>
     <tbody>
     {% for tx in sum %}
-        <tr>
-            <td align="middle">{{ tx.date }}</td>
-            <td align="middle">{{ tx.value }}</td>
-        </tr>
+    <tr>
+        <td align="middle">{{ tx.date }}</td>
+        <td align="middle">{{ tx.value }}</td>
+    </tr>
     {% endfor %}
     </tbody>
 </table>
