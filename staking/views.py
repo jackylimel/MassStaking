@@ -46,7 +46,6 @@ def _data_to_stake_holder(data, timestamp):
 def get_stake_holders(request):
     stake_holder_view_models = sorted(_get_stake_holder_view_model_dic(), key=lambda vm: vm.current_rank())
     total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
-
     transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
     tx_sum_list = _generate_grouped_transactions(transaction_view_models)
 
@@ -63,27 +62,31 @@ def get_stake_holders(request):
 
 def get_stake_holders_with_csv(request):
     response = HttpResponse(content_type='text/csv')
-    # response['Content-Disposition'] = 'attachment; filename="holder_summary.csv"'
-    response['Content-Disposition'] = 'attachment; filename="transaction_summary.csv"'
+    response['Content-Disposition'] = 'attachment; filename="holder_summary.csv"'
 
-    stake_holder_view_models = _get_stake_holder_view_model_dic()
-
-    transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
-    tx_sum_list = _generate_grouped_transactions(transaction_view_models)
-
-    for holder in stake_holder_view_models:
-        holder.add_transactions([tx for tx in transaction_view_models if tx.holder_address == holder.address])
+    stake_holder_view_models = sorted(_get_stake_holder_view_model_dic(), key=lambda vm: vm.current_rank())
 
     writer = csv.writer(response)
+    writer.writerow(['Address', 'Rank', 'Change since yesterday', 'Total amount', 'Change since yesterday'])
+    for holder in stake_holder_view_models:
+        writer.writerow([holder.address, holder.current_rank(), holder.rank_change(),
+                         holder.current_total_amount(), holder.amount_change()])
 
-    writer.writerow(['Unlocking Time', 'Total'])
-    for tx in tx_sum_list:
-        writer.writerow([tx['date'], tx['value']])
+    return response
 
-    # writer.writerow(['Address', 'Rank', 'Change since yesterday', 'Total amount', 'Change since yesterday'])
-    # for holder in stake_holder_view_models:
-    #     writer.writerow([holder.address, holder.current_rank(), holder.rank_change(),
-    #                      holder.current_total_amount(), holder.amount_change()])
+
+def get_transactions_with_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="holder_transactions.csv"'
+
+    transaction_view_models = [TransactionViewModel(tx) for tx in _load_transactions()]
+    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
+
+    writer = csv.writer(response)
+    writer.writerow(['Address', 'Transaction Amount', 'Locking Time', 'Unlocking Time'])
+    for tx in sorted_transaction_view_models:
+        writer.writerow([tx.holder_address, tx.total, tx.locking_time, tx.unlocking_time])
+
     return response
 
 
@@ -112,7 +115,7 @@ def populate_transactions(request):
         if round(vm.amount_change(), 0) != 0:
             print('populate transactions for address: %s' % address)
             url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-            transactions = _get_transactions_from(address, url, single_page_only=(len(vm.holders) > 1))
+            transactions = _fetch_transactions_from(address, url, single_page_only=(len(vm.holders) > 1))
             for transaction in transactions:
                 transaction.save()
     return HttpResponse()
@@ -135,18 +138,18 @@ def _load_stake_holders():
     return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
-def _get_transactions_from(address, url, single_page_only=False):
+def _fetch_transactions_from(address, url, single_page_only=False):
     print('fetching data from url: %s' % url)
     json = requests.get(url).json()
     transaction_list = requests.get(url).json()['results']['data']['transaction_list']
-    transactions = [_data_to_transaction(address, data) for data in transaction_list]
+    transactions = [_map_data_to_transaction(address, data) for data in transaction_list]
 
     if (not single_page_only) and (json['next'] is not None):
-        transactions.extend(_get_transactions_from(address, json['next']))
+        transactions.extend(_fetch_transactions_from(address, json['next']))
     return transactions
 
 
-def _data_to_transaction(address, data):
+def _map_data_to_transaction(address, data):
     transaction = Transaction(hash=data['txhash'], amount=data['collect'],
                               timestamp=data['tx']['block']['timestamp'], holder_address=address)
     return transaction

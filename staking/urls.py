@@ -6,5 +6,6 @@ urlpatterns = [
     path('stakeholders/new', views.populate_stake_holders, name='populateStakeHolders'),
     path('stakeholders', views.get_stake_holders, name='getStakeHolders'),
     path('stakeholders/csv', views.get_stake_holders_with_csv, name='getStakeHoldersWithCSV'),
+    path('transactions/csv', views.get_transactions_with_csv, name='getTransactionsWithCSV'),
     path('stakeholders/transactions/new', views.populate_transactions, name='populationAllTransactions')
 ]
