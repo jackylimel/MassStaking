@@ -68,7 +68,10 @@ def get_stake_holders(request):
 
 
 def _load_transactions():
-    locking_timestamp = datetime.timestamp(datetime.now()) - 61440 * 45
+    now = datetime.now()
+    locking_timestamp = datetime.timestamp(datetime(year=now.year,
+                                                    month=now.month,
+                                                    day=now.day)) - 61440 * 45
     all_transactions = Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
     return [tx for tx in all_transactions if tx.holder_address not in Constants.official_addresses]
 
