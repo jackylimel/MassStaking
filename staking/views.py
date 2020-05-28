@@ -97,7 +97,7 @@ def get_transaction_sum_with_csv(request):
     writer = csv.writer(response)
     writer.writerow(['Unlocking Time', 'Total'])
     for tx in tx_sum_list:
-        writer.writerow([tx['date'].date(), tx['value']])
+        writer.writerow([tx['date'].date(), round(tx['value'], 0)])
 
     return response
 
@@ -107,7 +107,7 @@ def _generate_grouped_transactions(transaction_view_models):
     data_frame = pandas.DataFrame.from_records([vars(vm) for vm in sorted_transaction_view_models])
     tx_sum = data_frame.groupby('unlocking_day')['total'].sum()
     dic = tx_sum.to_dict()
-    tx_sum_list = [{'date': tx.to_pydatetime(), 'value': dic[tx]} for tx in dic]
+    tx_sum_list = [{'date': tx.to_pydatetime(), 'value': round(dic[tx], 0)} for tx in dic]
     return tx_sum_list
 
 

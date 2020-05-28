@@ -1,3 +1,5 @@
+from enum import Enum
+
 from django.db import models
 
 
@@ -8,6 +10,7 @@ class StakeHolder(models.Model):
     order = models.IntegerField()
     timestamp = models.CharField(max_length=50)
     receiving_reward = models.BooleanField()
+    type = models.CharField(max_length=20)
 
     def __str__(self):
         return 'Address: {0}, Rank: {1}, Amount: {2}, Timestamp: {3}'.format(self.address, self.order,
@@ -22,3 +25,9 @@ class Transaction(models.Model):
 
     def __str__(self):
         return ','.join(map(lambda key: '{key} = {value}'.format(key=key, value=self.__dict__.get(key)), self.__dict__))
+
+
+class StakeHolderType(Enum):
+    STAKING = "staking"
+    BINDING = "binding"
+    EXCHANGE = "exchange"
