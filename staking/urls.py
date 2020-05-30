@@ -4,9 +4,8 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('stakeholders/new', views.populate_stake_holders, name='populateStakeHolders'),
-    path('stakeholders', views.get_stake_holders, name='getStakeHolders'),
-    path('stakeholders/csv', views.get_stake_holders_with_csv, name='getStakeHoldersWithCSV'),
-    path('transactions/csv', views.get_transactions_with_csv, name='getTransactionsWithCSV'),
-    path('transactions/summary/csv', views.get_transaction_sum_with_csv, name='getTransactionSummaryWithCSV'),
-    path('stakeholders/transactions/new', views.populate_transactions, name='populationAllTransactions')
+    path('csv/stakeholders', views.get_stake_holders_with_csv, name='getStakeHoldersWithCSV'),
+    path('csv/transactions', views.get_transactions_with_csv, name='getTransactionsWithCSV'),
+    path('csv/summary', views.get_transaction_sum_with_csv, name='getTransactionSummaryWithCSV'),
+    path('transactions/new', views.populate_transactions, name='populationAllTransactions')
 ]

@@ -1,17 +1,10 @@
 import csv
-from functools import reduce
 
 import pandas
 from django.http import HttpResponse
-from django.shortcuts import render
 
 from .services import *
 from .view_models import *
-
-
-# Create your views here.
-def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
 
 
 def populate_stake_holders(request):
@@ -28,20 +21,16 @@ def populate_stake_holders(request):
     return HttpResponse("success")
 
 
-def get_stake_holders(request):
-    stake_holder_view_models = sorted(_get_stake_holder_view_model_dic(), key=lambda vm: vm.current_rank())
-    total = reduce(lambda accu, result: accu + float(result.current_total_amount()), stake_holder_view_models, 0)
-    transaction_view_models = [TransactionViewModel(tx) for tx in load_transactions()]
-    tx_sum_list = _generate_grouped_transactions(transaction_view_models)
-    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
-
-    context = {
-        'stake_holders': stake_holder_view_models,
-        'transactions': sorted_transaction_view_models,
-        'sum': tx_sum_list,
-        'total': total
-    }
-    return render(request, 'staking/index.html', context)
+def populate_transactions(request):
+    for vm in _get_stake_holder_view_model_dic():
+        address = vm.address
+        if round(vm.amount_change(), 0) != 0:
+            print('populate transactions for address: %s' % address)
+            url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
+            transactions = fetch_transactions_from(address, url, single_page_only=(len(vm.holders) > 1))
+            for transaction in transactions:
+                transaction.save()
+    return HttpResponse()
 
 
 def get_stake_holders_with_csv(request):
@@ -57,6 +46,18 @@ def get_stake_holders_with_csv(request):
                          holder.current_total_amount(), holder.amount_change()])
 
     return response
+
+
+def _get_stake_holder_view_model_dic():
+    stake_holders = load_stake_holders()
+    holders_dic = {}
+    for holder in stake_holders:
+        vm = holders_dic.get(holder.address)
+        if vm is None:
+            holders_dic[holder.address] = StakingViewModel(holder)
+        else:
+            holders_dic.get(holder.address).add_holder(holder)
+    return holders_dic.values()
 
 
 def get_transactions_with_csv(request):
@@ -94,28 +95,3 @@ def _generate_grouped_transactions(transaction_view_models):
     dic = tx_sum.to_dict()
     tx_sum_list = [{'date': tx.to_pydatetime(), 'value': round(dic[tx], 0)} for tx in dic]
     return tx_sum_list
-
-
-def populate_transactions(request):
-    stake_holder_view_model_dic = _get_stake_holder_view_model_dic()
-    for vm in stake_holder_view_model_dic:
-        address = vm.address
-        if round(vm.amount_change(), 0) != 0:
-            print('populate transactions for address: %s' % address)
-            url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-            transactions = fetch_transactions_from(address, url, single_page_only=(len(vm.holders) > 1))
-            for transaction in transactions:
-                transaction.save()
-    return HttpResponse()
-
-
-def _get_stake_holder_view_model_dic():
-    stake_holders = load_stake_holders()
-    holders_dic = {}
-    for holder in stake_holders:
-        vm = holders_dic.get(holder.address)
-        if vm is None:
-            holders_dic[holder.address] = StakingViewModel(holder)
-        else:
-            holders_dic.get(holder.address).add_holder(holder)
-    return holders_dic.values()

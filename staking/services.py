@@ -16,7 +16,7 @@ def fetch_stake_holders():
 
 def _data_to_stake_holder(data, timestamp):
     return StakeHolder(address=data['address'], total_amount=data['total_amount'],
-                       order=data['id'], timestamp=timestamp, receiving_reward=True, type=StakeHolderType.STAKING)
+                       order=data['id'], timestamp=timestamp, receiving_reward=True, type=StakeHolderType.STAKING.value)
 
 
 def fetch_transactions_from(address, url, single_page_only=False):

@@ -1,5 +1,6 @@
 class Constants:
-    official_addresses = [
+    official_addresses = []
+    official_addresses2 = [
         'ms1qpa36vvapwadg9ln9e35y2z79jy57esxjtrx0e9y24az9x45t0g07q8zu0aa',
         'ms1qptxyqfjk6zwz08dq5frzcvl8fr2r5tk4uxumwlndwafx3pzqgl92q6fwzw0',
         'ms1qpn57xlszkvnfpvpc9294pfj3uqetvrmf6t4xg96q5ut8ywyk64t8s7lgeg9',
