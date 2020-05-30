@@ -16,8 +16,8 @@ class Constants:
         'ms1qp5yer09j9tdsedewx8mju4jaw4qu3jw8zjrc546kz868wsjkwusgqm5mrzp'
     ]
 
-    exchange_addresses = {
-        'mxc': 'ms1qqe8dj5jl4tsfjvt2gg4anjftmtyt042fckp26ss2d423sty4yvs4ssxmyvl'
+    exchange_address = {
+        'ms1qqe8dj5jl4tsfjvt2gg4anjftmtyt042fckp26ss2d423sty4yvs4ssxmyvl': 'mxc'
     }
 
     binding_addresses = [

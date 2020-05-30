@@ -8,6 +8,7 @@ from .view_models import *
 
 
 def populate_stake_holders(request):
+    update_exchange_addresses()
     new_stake_holders = fetch_stake_holders()
     new_stake_holder_addresses = [holder.address for holder in new_stake_holders]
     existing_stake_holders = load_stake_holders()

@@ -4,7 +4,7 @@ from django.db import models
 
 
 # Create your models here.
-class StakeHolder(models.Model):
+class Holder(models.Model):
     address = models.CharField(max_length=100)
     total_amount = models.FloatField()
     order = models.IntegerField()

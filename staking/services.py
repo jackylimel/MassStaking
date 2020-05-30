@@ -15,14 +15,14 @@ def fetch_stake_holders():
 
 
 def _data_to_stake_holder(data, timestamp):
-    return StakeHolder(address=data['address'], total_amount=data['total_amount'],
-                       order=data['id'], timestamp=timestamp, receiving_reward=True, type=StakeHolderType.STAKING.value)
+    return Holder(address=data['address'], total_amount=data['total_amount'],
+                  order=data['id'], timestamp=timestamp, receiving_reward=True, type=StakeHolderType.STAKING.value)
 
 
 def fetch_transactions_from(address, url, single_page_only=False):
     print('fetching data from url: %s' % url)
     json = requests.get(url).json()
-    transaction_list = requests.get(url).json()['results']['data']['transaction_list']
+    transaction_list = json['results']['data']['transaction_list']
     transactions = [_map_data_to_transaction(address, data) for data in transaction_list]
 
     if (not single_page_only) and (json['next'] is not None):
@@ -37,7 +37,7 @@ def _map_data_to_transaction(address, data):
 
 
 def load_stake_holders():
-    stake_holders = StakeHolder.objects.filter(receiving_reward=True)
+    stake_holders = Holder.objects.filter(receiving_reward=True, type=StakeHolderType.STAKING.value)
     return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
@@ -48,3 +48,14 @@ def load_transactions():
                                                     day=now.day)) - 61440 * 45
     all_transactions = Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
     return [tx for tx in all_transactions if tx.holder_address not in Constants.official_addresses]
+
+
+def update_exchange_addresses():
+    timestamp = datetime.timestamp(datetime.now())
+
+    for address in Constants.exchange_address.keys():
+        r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s' % address)
+        data = r.json()['results']['data']
+        holder = Holder(address=address, total_amount=data['balance'], order=999, timestamp=timestamp,
+                        receiving_reward=False, type=StakeHolderType.EXCHANGE.value)
+        holder.save()
