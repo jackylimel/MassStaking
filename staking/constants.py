@@ -14,3 +14,11 @@ class Constants:
         'ms1qpzpgj2fl2qfa9dv0slywmt0pakt2eepdkzds99yq0rr2z5fyyq63szedajf',
         'ms1qp5yer09j9tdsedewx8mju4jaw4qu3jw8zjrc546kz868wsjkwusgqm5mrzp'
     ]
+
+    exchange_addresses = {
+        'mxc': 'ms1qqe8dj5jl4tsfjvt2gg4anjftmtyt042fckp26ss2d423sty4yvs4ssxmyvl'
+    }
+
+    binding_addresses = [
+        'ms1qqxkcrseuswvjtrt8khln58rqu38rw83nf4xkrxxdtamhnz6jdr2kqx2hj90',
+    ]
