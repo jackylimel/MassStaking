@@ -27,6 +27,14 @@ class Transaction(models.Model):
         return ','.join(map(lambda key: '{key} = {value}'.format(key=key, value=self.__dict__.get(key)), self.__dict__))
 
 
+class Binding(models.Model):
+    amount = models.FloatField()
+    timestamp = models.CharField(max_length=100)
+
+    def __str__(self):
+        return "Amount: {0}, Timestamp: {1}".format(self.amount, self.timestamp)
+
+
 class StakeHolderType(Enum):
     STAKING = "staking"
     BINDING = "binding"

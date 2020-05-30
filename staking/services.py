@@ -59,3 +59,11 @@ def update_exchange_addresses():
         holder = Holder(address=address, total_amount=data['balance'], order=999, timestamp=timestamp,
                         receiving_reward=False, type=StakeHolderType.EXCHANGE.value)
         holder.save()
+
+
+def update_binding():
+    timestamp = datetime.timestamp(datetime.now())
+    r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/addresses/binding/total')
+    amount = r.json()
+    binding = Binding(amount=amount, timestamp=timestamp)
+    binding.save()
