@@ -1,4 +1,5 @@
 import csv
+from functools import reduce
 
 import pandas
 from django.http import HttpResponse
@@ -8,6 +9,7 @@ from .view_models import *
 
 
 def populate_stake_holders(request):
+    print('populating stake holders')
     update_binding()
     update_exchange_addresses()
     new_stake_holders = fetch_stake_holders()
@@ -42,11 +44,20 @@ def get_stake_holders_with_csv(request):
     stake_holder_view_models = sorted(_get_stake_holder_view_model_dic(), key=lambda vm: vm.current_rank())
 
     writer = csv.writer(response)
+
+    writer.writerow(['Total Binding', 'Change since yesterday'])
+    binding_view_model = _get_binding_view_model()
+    writer.writerow([binding_view_model.current_total_amount(), binding_view_model.amount_change()])
+    writer.writerow(['----------------------------------------'])
+    writer.writerow(['Total Staking', 'Change since yesterday'])
+    total_staking = reduce(lambda accu, result: accu + result.current_total_amount(), stake_holder_view_models, 0)
+    total_staking_change = reduce(lambda accu, result: accu + result.amount_change(), stake_holder_view_models, 0)
+    writer.writerow([total_staking, total_staking_change])
+    writer.writerow(['----------------------------------------'])
     writer.writerow(['Address', 'Rank', 'Change since yesterday', 'Total amount', 'Change since yesterday'])
     for holder in stake_holder_view_models:
         writer.writerow([holder.address, holder.current_rank(), holder.rank_change(),
                          holder.current_total_amount(), holder.amount_change()])
-
     return response
 
 
@@ -60,6 +71,13 @@ def _get_stake_holder_view_model_dic():
         else:
             holders_dic.get(holder.address).add_holder(holder)
     return holders_dic.values()
+
+
+def _get_binding_view_model():
+    view_model = BindingViewModel()
+    for binding in load_bindings():
+        view_model.add_binding(binding)
+    return view_model
 
 
 def get_transactions_with_csv(request):

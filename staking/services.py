@@ -41,6 +41,14 @@ def load_stake_holders():
     return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
+def load_exchanges():
+    return Holder.objects.filter(type=StakeHolderType.EXCHANGE.value)
+
+
+def load_bindings():
+    return Binding.objects.all()
+
+
 def load_transactions():
     now = datetime.now()
     locking_timestamp = datetime.timestamp(datetime(year=now.year,
