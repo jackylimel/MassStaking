@@ -10,6 +10,7 @@ from .view_models import *
 
 def populate_stake_holders(request):
     print('populating stake holders')
+    update_total_staking()
     update_binding()
     update_exchange_addresses()
     new_stake_holders = fetch_stake_holders()

@@ -75,3 +75,11 @@ def update_binding():
     amount = r.json()
     binding = Binding(amount=amount, timestamp=timestamp)
     binding.save()
+
+
+def update_total_staking():
+    timestamp = datetime.timestamp(datetime.now())
+    r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/addresses/staking/total/')
+    amount = r.json()
+    binding = Staking(amount=amount, timestamp=timestamp)
+    binding.save()
