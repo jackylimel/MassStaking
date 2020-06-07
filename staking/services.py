@@ -49,6 +49,10 @@ def load_bindings():
     return Binding.objects.all()
 
 
+def load_total_staking():
+    return Staking.objects.all()
+
+
 def load_transactions():
     now = datetime.now()
     locking_timestamp = datetime.timestamp(datetime(year=now.year,

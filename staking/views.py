@@ -50,11 +50,18 @@ def get_stake_holders_with_csv(request):
     binding_view_model = _get_binding_view_model()
     writer.writerow([binding_view_model.current_total_amount(), binding_view_model.amount_change()])
     writer.writerow(['----------------------------------------'])
-    writer.writerow(['Total Staking', 'Change since yesterday'])
-    total_staking = reduce(lambda accu, result: accu + result.current_total_amount(), stake_holder_view_models, 0)
-    total_staking_change = reduce(lambda accu, result: accu + result.amount_change(), stake_holder_view_models, 0)
-    writer.writerow([total_staking, total_staking_change])
+
+    writer.writerow(['Top 30 Staking', 'Change since yesterday'])
+    top_30_staking = reduce(lambda accu, result: accu + result.current_total_amount(), stake_holder_view_models, 0)
+    top_30_staking_change = reduce(lambda accu, result: accu + result.amount_change(), stake_holder_view_models, 0)
+    writer.writerow([top_30_staking, top_30_staking_change])
     writer.writerow(['----------------------------------------'])
+
+    writer.writerow(['Total Staking', 'Change since yesterday'])
+    total_staking_view_model = _get_total_staking_view_model()
+    writer.writerow([total_staking_view_model.current_total_amount(), total_staking_view_model.amount_change()])
+    writer.writerow(['----------------------------------------'])
+
     writer.writerow(['Address', 'Rank', 'Change since yesterday', 'Total amount', 'Change since yesterday'])
     for holder in stake_holder_view_models:
         writer.writerow([holder.address, holder.current_rank(), holder.rank_change(),
@@ -78,6 +85,13 @@ def _get_binding_view_model():
     view_model = BindingViewModel()
     for binding in load_bindings():
         view_model.add_binding(binding)
+    return view_model
+
+
+def _get_total_staking_view_model():
+    view_model = BindingViewModel()
+    for staking in load_total_staking():
+        view_model.add_binding(staking)
     return view_model
 
 
