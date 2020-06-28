@@ -43,6 +43,14 @@ class Staking(models.Model):
         return "Amount: {0}, Timestamp: {1}".format(self.amount, self.timestamp)
 
 
+class Block(models.Model):
+    height = models.IntegerField()
+    timestamp = models.CharField(max_length=100)
+
+    def __str__(self):
+        return "Height: {0}, Timestamp: {1}".format(self.height, self.timestamp)
+
+
 class StakeHolderType(Enum):
     STAKING = "staking"
     BINDING = "binding"

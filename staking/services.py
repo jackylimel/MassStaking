@@ -41,10 +41,6 @@ def load_stake_holders():
     return [holder for holder in stake_holders if holder.address not in Constants.official_addresses]
 
 
-def load_exchanges():
-    return Holder.objects.filter(type=StakeHolderType.EXCHANGE.value)
-
-
 def load_bindings():
     return Binding.objects.all()
 
@@ -62,28 +58,22 @@ def load_transactions():
     return [tx for tx in all_transactions if tx.holder_address not in Constants.official_addresses]
 
 
-def update_exchange_addresses():
-    timestamp = datetime.timestamp(datetime.now())
-
-    for address in Constants.exchange_address.keys():
-        r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s' % address)
-        data = r.json()['results']['data']
-        holder = Holder(address=address, total_amount=data['balance'], order=999, timestamp=timestamp,
-                        receiving_reward=False, type=StakeHolderType.EXCHANGE.value)
-        holder.save()
-
-
-def update_binding():
-    timestamp = datetime.timestamp(datetime.now())
+def update_binding(timestamp):
     r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/addresses/binding/total')
     amount = r.json()
     binding = Binding(amount=amount, timestamp=timestamp)
     binding.save()
 
 
-def update_total_staking():
-    timestamp = datetime.timestamp(datetime.now())
+def update_total_staking(timestamp):
     r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/addresses/staking/total/')
     amount = r.json()
     binding = Staking(amount=amount, timestamp=timestamp)
     binding.save()
+
+
+def update_block_height(timestamp):
+    r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/blocks/')
+    height = r.json()['count']
+    block = Block(height=height, timestamp=timestamp)
+    block.save()
