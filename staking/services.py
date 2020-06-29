@@ -6,10 +6,9 @@ from .constants import Constants
 from .models import *
 
 
-def fetch_stake_holders():
+def fetch_stake_holders(timestamp):
     r = requests.get('https://explorerapi.masscafe.cn/v1/explorer/transactions/staking/reward/top/?limit=30')
     data_set = r.json()['data']
-    timestamp = datetime.timestamp(datetime.now())
     new_stake_holders = [_data_to_stake_holder(data, timestamp) for data in data_set]
     return new_stake_holders
 
@@ -66,13 +65,23 @@ def load_transaction_hashes_for_address(address):
     return [tx.hash for tx in transactions]
 
 
-def load_transactions():
-    now = datetime.now()
-    locking_timestamp = datetime.timestamp(datetime(year=now.year,
-                                                    month=now.month,
-                                                    day=now.day)) - 61440 * 45
-    all_transactions = Transaction.objects.filter(amount__gt=0, timestamp__gte=locking_timestamp)
-    return [tx for tx in all_transactions if tx.holder_address not in Constants.official_addresses]
+def get_current_and_future_block():
+    blocks = Block.objects.all().order_by("-height")
+    current_block = blocks[0]
+    previous_block = blocks[1]
+    height_difference = current_block.height - previous_block.height
+    timestamp_difference = int(float(current_block.timestamp) - float(previous_block.timestamp))
+    seconds_per_block = timestamp_difference / height_difference
+    print("height difference between recent two blocks: {}".format(height_difference))
+    print("time difference between recent two blocks: {}".format(timestamp_difference))
+    print("seconds per block: {}".format(seconds_per_block))
+    next_block_height_in_24_hours = current_block.height + int(86400 / seconds_per_block)
+    print("current block height: {}, next block height: {}".format(current_block.height, next_block_height_in_24_hours))
+    return current_block.height, next_block_height_in_24_hours, seconds_per_block
+
+
+def load_transactions_between(min_height, max_height):
+    return Transaction.objects.filter(block__gte=min_height, block__lte=max_height, amount__gt=0)
 
 
 def update_binding(timestamp):

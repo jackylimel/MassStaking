@@ -8,13 +8,14 @@ from ..view_models import *
 
 
 def populate_stake_holders(request):
-    print('populating stake holders')
     timestamp = datetime.timestamp(datetime.now())
     update_total_staking(timestamp)
+    print("updating binding")
     update_binding(timestamp)
+    print("updating block height")
     update_block_height(timestamp)
-
-    new_stake_holders = fetch_stake_holders()
+    print('updating stake holders')
+    new_stake_holders = fetch_stake_holders(timestamp)
     new_stake_holder_addresses = [holder.address for holder in new_stake_holders]
     existing_stake_holders = load_stake_holders()
     if len(new_stake_holder_addresses) != 0:

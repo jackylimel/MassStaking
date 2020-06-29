@@ -49,15 +49,11 @@ class TransactionViewModel:
         self.timestamp = transaction.timestamp
         self.holder_address = transaction.holder_address
         self.locking_time = DateHelper.from_time_stamp(transaction.timestamp)
-        if self.total > 0:
-            self.unlocking_time = DateHelper.from_time_stamp(
-                float(transaction.timestamp) + 61440 * 45 - 3600 * 24 * 2 - 3600 * 17)
-            self.unlocking_day = datetime(year=self.unlocking_time.year,
-                                          month=self.unlocking_time.month,
-                                          day=self.unlocking_time.day)
-        else:
-            self.unlocking_time = None
-            self.unlocking_day = None
+        self.locking_block = transaction.block
+        self.unlocking_block = transaction.block + 61440
+
+    def __str__(self):
+        return ','.join(map(lambda key: '{key} = {value}'.format(key=key, value=self.__dict__.get(key)), self.__dict__))
 
 
 class BindingViewModel:

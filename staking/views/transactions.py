@@ -1,7 +1,9 @@
+import csv
+
 from django.http import HttpResponse
-import pandas
 
 from ..services import *
+from ..view_models import TransactionViewModel
 
 
 def populate_transactions(request):
@@ -12,19 +14,25 @@ def populate_transactions(request):
         fetch_transactions_from(address, url, existing_hashes)
     return HttpResponse()
 
-# def get_transactions_with_csv(request):
-#     response = HttpResponse(content_type='text/csv')
-#     response['Content-Disposition'] = 'attachment; filename="holder_transactions.csv"'
-#
-#     transaction_view_models = [TransactionViewModel(tx) for tx in load_transactions()]
-#     sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
-#
-#     writer = csv.writer(response)
-#     writer.writerow(['Address', 'Transaction Amount', 'Locking Time', 'Unlocking Time'])
-#     for tx in sorted_transaction_view_models:
-#         writer.writerow([tx.holder_address, tx.total, tx.locking_time, tx.unlocking_time])
-#
-#     return response
+
+def calculate_unstaking_transactions(request):
+    current, future, seconds_per_block = get_current_and_future_block()
+    min_staking_height = current - 61440
+    max_staking_height = future - 61440
+    transactions = load_transactions_between(min_staking_height, max_staking_height)
+    transaction_view_models = [TransactionViewModel(tx) for tx in transactions]
+    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="holder_transactions.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['----------------------------------------'])
+    writer.writerow(['当前区块高度', '出块时间(秒)'])
+    writer.writerow([current, int(seconds_per_block)])
+    writer.writerow(['----------------------------------------'])
+    writer.writerow(['地址', '解锁金额', '锁仓区块', '解锁区块'])
+    for tx in sorted_transaction_view_models:
+        writer.writerow([tx.holder_address, tx.total, tx.locking_block, tx.unlocking_block])
+    return response
 
 
 # def get_transaction_sum_with_csv(request):
