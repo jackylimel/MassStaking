@@ -14,6 +14,7 @@ def populate_stake_holders(request):
     update_total_staking(timestamp)
     update_binding(timestamp)
     update_block_height(timestamp)
+
     new_stake_holders = fetch_stake_holders()
     new_stake_holder_addresses = [holder.address for holder in new_stake_holders]
     existing_stake_holders = load_stake_holders()
@@ -27,25 +28,13 @@ def populate_stake_holders(request):
     return HttpResponse("success")
 
 
-# def populate_transactions(request):
-#     for vm in _get_stake_holder_view_model_dic():
-#         address = vm.address
-#         if round(vm.amount_change(), 0) != 0:
-#             print('populate transactions for address: %s' % address)
-#             url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-#             transactions = fetch_transactions_from(address, url, single_page_only=(len(vm.holders) > 1))
-#             for transaction in transactions:
-#                 transaction.save()
-#     return HttpResponse()
-#
-#
-# def populate_transaction(request, address):
-#     print('populate transactions for address: %s' % address)
-#     url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
-#     transactions = fetch_transactions_from(address, url, single_page_only=False)
-#     for transaction in transactions:
-#         transaction.save()
-#     return HttpResponse()
+def populate_transactions(request):
+    for address in load_distinct_stake_holder_addresses():
+        print('populate transactions for address: %s' % address)
+        url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
+        existing_hashes = load_transaction_hashes_for_address(address)
+        fetch_transactions_from(address, url, existing_hashes)
+    return HttpResponse()
 
 
 def get_stake_holders_with_csv(request):
@@ -103,7 +92,6 @@ def _get_total_staking_view_model():
     for staking in load_total_staking():
         view_model.add_binding(staking)
     return view_model
-
 
 # def get_transactions_with_csv(request):
 #     response = HttpResponse(content_type='text/csv')

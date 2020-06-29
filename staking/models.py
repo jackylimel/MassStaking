@@ -22,6 +22,7 @@ class Transaction(models.Model):
     holder_address = models.CharField(max_length=100)
     timestamp = models.CharField(max_length=100)
     amount = models.FloatField()
+    block = models.IntegerField()
 
     def __str__(self):
         return ','.join(map(lambda key: '{key} = {value}'.format(key=key, value=self.__dict__.get(key)), self.__dict__))
