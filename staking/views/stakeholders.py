@@ -12,8 +12,6 @@ def populate_stake_holders(request):
     update_total_staking(timestamp)
     print("updating binding")
     update_binding(timestamp)
-    print("updating block height")
-    update_block_height(timestamp)
     print('updating stake holders')
     new_stake_holders = fetch_stake_holders(timestamp)
     new_stake_holder_addresses = [holder.address for holder in new_stake_holders]
@@ -25,10 +23,42 @@ def populate_stake_holders(request):
             filtered_holder.save()
     for new_holder in new_stake_holders:
         new_holder.save()
-    return HttpResponse("success")
+    return calculate_unstaking_transactions(timestamp)
 
 
-def get_stake_holders_with_csv(request):
+def calculate_unstaking_transactions(timestamp):
+    print("updating block height")
+    update_block_height(timestamp)
+
+    current, future, seconds_per_block = get_current_and_future_block()
+    min_staking_height = current - 61440
+    max_staking_height = future - 61440
+    transactions = load_transactions_between(min_staking_height, max_staking_height)
+    transaction_view_models = [TransactionViewModel(tx) for tx in transactions]
+    sorted_transaction_view_models = sorted(transaction_view_models, key=lambda tx: tx.timestamp)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="holder_transactions.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['----------------------------------------'])
+    writer.writerow(['当前区块高度', '出`块时间(秒)'])
+    writer.writerow([current, int(seconds_per_block)])
+    writer.writerow(['----------------------------------------'])
+    writer.writerow(['地址', '解锁金额', '锁仓区块', '解锁区块'])
+    for tx in sorted_transaction_view_models:
+        writer.writerow([tx.holder_address, tx.total, tx.locking_block, tx.unlocking_block])
+    return response
+
+
+def populate_transactions(request):
+    for address in load_distinct_stake_holder_addresses():
+        print('populate transactions for address: %s' % address)
+        url = ('https://explorerapi.masscafe.cn/v1/explorer/addresses/%s/?page=1&tx_type=1' % address)
+        existing_hashes = load_transaction_hashes_for_address(address)
+        fetch_transactions_from(address, url, existing_hashes)
+    return get_stake_holders_with_csv()
+
+
+def get_stake_holders_with_csv():
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="holder_summary.csv"'
 
